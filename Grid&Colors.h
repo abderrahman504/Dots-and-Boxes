@@ -1,4 +1,5 @@
-
+#ifndef GRID_COLORS
+#define GRID_COLORS
 
 
 #define VLine 186
@@ -28,3 +29,7 @@ enum COLOUR{
     White
 };
 
+
+
+
+#endif

@@ -3,26 +3,45 @@
 #include "Grid&Colors.h"
 
 
-const unsigned char* GRID[20] = {};
+void color_printf(char *str, int fore, int back);
+int load_game(int difficulty, int gameMode);
 
 
 
-int main()
+const char grid2x2[5][14] = {
+    {'\t', SmallBox, HLine, HLine, HLine, HLine, SmallBox, HLine, HLine, HLine, HLine, SmallBox, '\n', '\0'}, 
+    {'\t', VLine, ' ', BigBox, BigBox, ' ', VLine, ' ', BigBox, BigBox, ' ', VLine, '\n', '\0'},
+    {'\t', SmallBox, HLine, HLine, HLine, HLine, SmallBox, HLine, HLine, HLine, HLine, SmallBox, '\n', '\0'}, 
+    {'\t', VLine, ' ', BigBox, BigBox, ' ', VLine, ' ', BigBox, BigBox, ' ', VLine, '\n', '\0'},
+    {'\t', SmallBox, HLine, HLine, HLine, HLine, SmallBox, HLine, HLine, HLine, HLine, SmallBox, '\n', '\0'}}; 
+const char grid5x5[11][29] = {
+    {'\t', SmallBox, HLine, HLine, HLine, HLine, SmallBox, HLine, HLine, HLine, HLine, SmallBox, HLine, HLine, HLine, HLine, SmallBox, HLine, HLine, HLine, HLine, SmallBox, HLine, HLine, HLine, HLine, SmallBox, '\n', '\0'},
+    {'\t', VLine, ' ', BigBox, BigBox, ' ', VLine, ' ', BigBox, BigBox, ' ', VLine, ' ', BigBox, BigBox, ' ', VLine, ' ', BigBox, BigBox, ' ', VLine, ' ', BigBox, BigBox, ' ', VLine, '\n', '\0'},
+    {'\t', SmallBox, HLine, HLine, HLine, HLine, SmallBox, HLine, HLine, HLine, HLine, SmallBox, HLine, HLine, HLine, HLine, SmallBox, HLine, HLine, HLine, HLine, SmallBox, HLine, HLine, HLine, HLine, SmallBox, '\n', '\0'},
+    {'\t', VLine, ' ', BigBox, BigBox, ' ', VLine, ' ', BigBox, BigBox, ' ', VLine, ' ', BigBox, BigBox, ' ', VLine, ' ', BigBox, BigBox, ' ', VLine, ' ', BigBox, BigBox, ' ', VLine, '\n', '\0'},
+    {'\t', SmallBox, HLine, HLine, HLine, HLine, SmallBox, HLine, HLine, HLine, HLine, SmallBox, HLine, HLine, HLine, HLine, SmallBox, HLine, HLine, HLine, HLine, SmallBox, HLine, HLine, HLine, HLine, SmallBox, '\n', '\0'},
+    {'\t', VLine, ' ', BigBox, BigBox, ' ', VLine, ' ', BigBox, BigBox, ' ', VLine, ' ', BigBox, BigBox, ' ', VLine, ' ', BigBox, BigBox, ' ', VLine, ' ', BigBox, BigBox, ' ', VLine, '\n', '\0'},
+    {'\t', SmallBox, HLine, HLine, HLine, HLine, SmallBox, HLine, HLine, HLine, HLine, SmallBox, HLine, HLine, HLine, HLine, SmallBox, HLine, HLine, HLine, HLine, SmallBox, HLine, HLine, HLine, HLine, SmallBox, '\n', '\0'},
+    {'\t', VLine, ' ', BigBox, BigBox, ' ', VLine, ' ', BigBox, BigBox, ' ', VLine, ' ', BigBox, BigBox, ' ', VLine, ' ', BigBox, BigBox, ' ', VLine, ' ', BigBox, BigBox, ' ', VLine, '\n', '\0'},
+    {'\t', SmallBox, HLine, HLine, HLine, HLine, SmallBox, HLine, HLine, HLine, HLine, SmallBox, HLine, HLine, HLine, HLine, SmallBox, HLine, HLine, HLine, HLine, SmallBox, HLine, HLine, HLine, HLine, SmallBox, '\n', '\0'},
+    {'\t', VLine, ' ', BigBox, BigBox, ' ', VLine, ' ', BigBox, BigBox, ' ', VLine, ' ', BigBox, BigBox, ' ', VLine, ' ', BigBox, BigBox, ' ', VLine, ' ', BigBox, BigBox, ' ', VLine, '\n', '\0'},
+    {'\t', SmallBox, HLine, HLine, HLine, HLine, SmallBox, HLine, HLine, HLine, HLine, SmallBox, HLine, HLine, HLine, HLine, SmallBox, HLine, HLine, HLine, HLine, SmallBox, HLine, HLine, HLine, HLine, SmallBox, '\n', '\0'}};
+
+
+
+int load_game(int difficulty, int game_mode)
 {
-    enum COLOUR fontColor = Cyan;
-    enum COLOUR background = Black;
+    
+    return 0;
+}
+
+
+
+void color_printf(char* str, int fore, int back)
+{
     HANDLE hConsole;
     hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-    SetConsoleTextAttribute(hConsole,fontColor + 16*background);
-    while (1)
-    {
-        unsigned char character;
-        scanf("%d", &character);
-        if (!character) break;
-        fflush(stdin);
-        fflush(stdout);
-        printf("%c\n", character);
-    }
-
-    return 0;
+    SetConsoleTextAttribute(hConsole, fore + 16*back);
+    printf(str);
+    SetConsoleTextAttribute(hConsole, White + 16*Black);
 }
