@@ -1,14 +1,11 @@
 #ifndef GRID_COLORS
 #define GRID_COLORS
 
-
 #define VLine 186
 #define HLine 205
 #define SmallBox 254
 #define BigBox 219
-
-
-
+#define HLineWidth 4
 
 enum COLOUR{
     Black,

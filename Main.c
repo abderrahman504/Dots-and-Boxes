@@ -17,19 +17,26 @@ int main()
         switch (message)
         {
             case MS_STARTGAME:
-                load_game(1, 1);
+                message = load_game(1, 1);
                 break;
             case MS_MENU:
-                //load_menu();
+                //message = load_menu();
                 break;
             case MS_SAVES:
-                //load_saves();
+                //message = load_saves();
                 break;
             case MS_LEADERBOARD:
-                //load_leaderboard();
+                //message = load_leaderboard();
                 break;
             case MS_EXIT:
                 goto end;
+            case -1:
+                getchar();
+                return 0;
+            default:
+                printf("Unidentified message value sent to main.\n");
+                getchar(); //pausing the program with getchar().
+                return 0;
         }
     }
 
