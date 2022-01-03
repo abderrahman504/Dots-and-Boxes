@@ -1,16 +1,16 @@
 #include <stdio.h>
 #include <windows.h> // WinApi header
 #include <stdlib.h>
-#include "Grid&Colors.h"
+#include "Constants.h"
 #include "Menu.c"
 #define MAX_NAME 50
 #define GRID_SMALL 2
 #define GRID_LARGE 5
-#define MODE_1 1
-#define MODE_2 2
+
 
 struct player
 {
+    char id;
     int score;
     char name[MAX_NAME];
     int linesDrawn;
@@ -20,18 +20,20 @@ int load_game(int difficulty, char game_Mode);
 int set_grid(int difficulty);
 void set_mode(char game_mode);
 void reset_stats();
-void reset_player(struct player player);
-void update_stats();
+void reset_player(struct player fplayer);
+void update_stats(char line_drawn, int new_line[2]);
+char check_new_boxes(int new_line[2]);
+void update_grid(int new_line[2]);
 void update_screen();
 void take_input();
 void send_message();
 
 void color_printf(char *str, int fore, int back);
 
-
 //game stats
 struct player player1; //Structure that contains player 1's stats.
 struct player player2; //Structure that contains player 2's stats.
+struct player playingPlayer;
 char** gameGrid; //The grid of the game.
 char gameMode;
 int gridSize;
@@ -40,10 +42,15 @@ int linesRemaining;
 double gameTime; 
 char** lines; //This is a 2d array that stores the state of all lines in the game.
 
+
+
+//The function that runs while a game is being played.
 int load_game(int difficulty, char game_mode)
 {
-    int err = 0;
-    struct player playingPlayer = player1;
+    char lineDrawn = 0; //Boolean to check if a line has been drawn this turn. 
+    int newLine[2];//Index of the new line in the lines array.
+    char err = 0; //Variable that's used to check if a function faced an error during execution.
+    playingPlayer = player1;
 
     err = set_grid(difficulty);
     if (err == -1)
@@ -51,12 +58,15 @@ int load_game(int difficulty, char game_mode)
         getchar();
         return -1;
     }
-    set_mode(game_mode);
-    reset_stats();
-    update_stats();
-    update_screen();
-    take_input();
 
+    set_mode(game_mode);
+    reset_stats(playingPlayer);
+    while (1)
+    {
+        update_stats(lineDrawn, newLine);
+        update_screen();
+        take_input();
+    }
     printf("About to end execution.");
     getchar();
     return 0;
@@ -131,13 +141,20 @@ int set_grid(int difficulty)
     }
 }
 
+
+
 void set_mode(char game_mode)
 {
     gameMode = game_mode;
 }
 
+
+
 void reset_stats()
 {
+    player1.id = 1;
+    player2.id = 2;
+    
     printf("Player 1, Enter your name: ");
     gets(player1.name);
     printf("\n");
@@ -149,7 +166,11 @@ void reset_stats()
         gets(player2.name);
         printf("\n");
     }
-    reset_player(player2);    
+    reset_player(player2);
+    turn = 0;
+    gameTime = 0;
+    linesRemaining = 2*gridSize*(gridSize+1); 
+
 }
 
 void reset_player(struct player fplayer)
@@ -160,10 +181,30 @@ void reset_player(struct player fplayer)
     return;
 }
 
-void update_stats()
-{
 
+
+void update_stats(char line_drawn, int new_line[2])
+{
+    if (line_drawn)
+    {
+        lines[new_line[0]][new_line[1]] = playingPlayer.id;
+        char boxDrawn = check_new_boxes(new_line);
+    }
 }
+
+char check_new_boxes(int new_line[2])
+{
+    switch (new_line[0]%2)
+        {
+            case 0: //Need to check:
+            //1.The row above and below; the lines at the same column and the next column
+            //2.The row above and below by 2; the lines at the same column.
+
+                break;
+        }
+}
+
+
 
 void update_screen()
 {
@@ -174,6 +215,9 @@ void update_screen()
         color_printf(gameGrid[row], Black, White);
     }
 }
+
+
+
 
 void color_printf(char* str, int fore, int back)
 {

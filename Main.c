@@ -1,12 +1,12 @@
 #include "Game Loop.c"
+#include "Menu.c"
+#include "Constants.h"
 
-#define MS_EXIT 0
-#define MS_STARTGAME 1
-#define MS_MENU 2
-#define MS_SAVES 3
-#define MS_LEADERBOARD 4
 
-int message = MS_STARTGAME;
+
+char message = MS_STARTGAME;
+char gDifficulty = DIFF_HARD;
+char gMode = MODE_2;
 
 
 
@@ -17,10 +17,10 @@ int main()
         switch (message)
         {
             case MS_STARTGAME:
-                message = load_game(1, 1);
+                message = load_game(gDifficulty,gMode);
                 break;
             case MS_MENU:
-                //message = load_menu();
+                message = load_menu();
                 break;
             case MS_SAVES:
                 //message = load_saves();
