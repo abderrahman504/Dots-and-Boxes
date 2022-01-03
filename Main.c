@@ -4,7 +4,7 @@
 
 
 
-char message = MS_STARTGAME;
+int message = MS_STARTGAME;
 char gDifficulty = DIFF_HARD;
 char gMode = MODE_2;
 
