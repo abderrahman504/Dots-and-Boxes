@@ -86,3 +86,40 @@
 	■════■════■════■════■════■════■════■
 	║ ██ ║ ██ ║ ██ ║ ██ ║ ██ ║ ██ ║ ██ ║
 	■════■════■════■════■════■════■════■
+
+
+
+
+_______________________Menu Design____________
+
+Welcome to Dots and Boxes
+
+1-New Game
+2-Load Game
+3-Leaderboard
+4-Exit
+
+Choose an option (for example, enter "1" to select "New Game")
+
+-------------------New Game-----------------------
+
+Select difficulty:
+	1-Beginner
+	2-Expert
+	3-Back to menu
+
+-------------------
+
+Select Game Mode:
+	1-One player mode
+	2-Two player mode
+	3-Back
+
+--------------------Load Game----------------------------
+
+Choose a save file:
+	1-Save file 1
+	2-Save file 2
+	3-Save file 3
+	4-Back
+

@@ -1,10 +1,6 @@
-#ifndef _GAME_LOOP_
-#define _GAME_LOOP_
 #include <stdio.h>
-#include <windows.h> // WinApi header
 #include <stdlib.h>
 #include "Constants.h"
-#include "Menu.c"
 #define MAX_NAME 50
 #define GRID_SMALL 2
 #define GRID_LARGE 5
@@ -19,18 +15,17 @@ struct player
 };
 
 int load_game(int difficulty, char game_Mode);
-int set_grid(int difficulty);
-void set_mode(char game_mode);
-void reset_stats();
-void reset_player(struct player fplayer);
-void update_stats(char line_drawn, int new_line[2]);
-char check_new_boxes(int new_line[2]);
-void update_grid(int new_line[2]);
-void update_screen();
-void take_input();
+static int set_grid(int difficulty);
+static void set_mode(char game_mode);
+static void reset_stats();
+static void reset_player(struct player fplayer);
+static void update_stats(char line_drawn, int new_line[2]);
+static char check_new_boxes(int new_line[2]);
+static void update_grid(int new_line[2]);
+static void update_screen();
+static void take_game_input();
 void send_message();
 
-void color_printf(char *str, int fore, int back);
 
 //game stats
 struct player player1; //Structure that contains player 1's stats.
@@ -67,7 +62,7 @@ int load_game(int difficulty, char game_mode)
     {
         update_stats(lineDrawn, newLine);
         update_screen();
-        take_input();
+        take_game_input();
     }
     printf("About to end execution.");
     getchar();
@@ -78,7 +73,7 @@ int load_game(int difficulty, char game_mode)
 
 //Determines the size of the grid based on the difficulty then constructs the grid that will be drawn.
 //Also sets the lines 2d array to all zeroes.
-int set_grid(int difficulty)
+static int set_grid(int difficulty)
 {
     switch (difficulty)
     {
@@ -115,6 +110,7 @@ int set_grid(int difficulty)
         }
         switch (i%2)
         {
+            char* lineRow;
             case 0:
             //Setting a row in gameGrid.
                 for (int j=0; j<gridSize; j++)
@@ -124,7 +120,7 @@ int set_grid(int difficulty)
                 }
                 row[gridSize*(HLineWidth+1)] = SmallBox;
             //Setting a row in lines.
-                char* lineRow = (char*) malloc(gridSize*sizeof(char));
+                lineRow = (char*) malloc(gridSize*sizeof(char));
                 for (int j=0; j<gridSize; j++) lineRow[j] = 0;
                 lines[i] = lineRow;
                 break;
@@ -132,7 +128,7 @@ int set_grid(int difficulty)
             //Setting a row in gameGrid.
                 for (int j=0; j<gridSize*(HLineWidth+1)+1; j++) row[j] = ' ';
             //Setting a row in lines.
-                char* lineRow = (char*) malloc((gridSize+1)*sizeof(char));
+                lineRow = (char*) malloc((gridSize+1)*sizeof(char));
                 for (int j=0; j<gridSize+1; j++) lineRow[j] = 0;
                 lines[i] = lineRow;
                 break;
@@ -145,14 +141,14 @@ int set_grid(int difficulty)
 
 
 
-void set_mode(char game_mode)
+static void set_mode(char game_mode)
 {
     gameMode = game_mode;
 }
 
 
 
-void reset_stats()
+static void reset_stats()
 {
     player1.id = 1;
     player2.id = 2;
@@ -175,7 +171,7 @@ void reset_stats()
 
 }
 
-void reset_player(struct player fplayer)
+static void reset_player(struct player fplayer)
 {
     fplayer.score = 0;
     fplayer.linesDrawn = 0;
@@ -185,7 +181,7 @@ void reset_player(struct player fplayer)
 
 
 
-void update_stats(char line_drawn, int new_line[2])
+static void update_stats(char line_drawn, int new_line[2])
 {
     if (line_drawn)
     {
@@ -194,7 +190,7 @@ void update_stats(char line_drawn, int new_line[2])
     }
 }
 
-char check_new_boxes(int new_line[2])
+static char check_new_boxes(int new_line[2])
 {
     switch (new_line[0]%2)
         {
@@ -208,26 +204,19 @@ char check_new_boxes(int new_line[2])
 
 
 
-void update_screen()
+static void update_screen()
 {
     system("cls");
     for (int row=0; row< 2*gridSize+1; row++)
     {
         printf("\t");
-        color_printf(gameGrid[row], Black, White);
+        color_printf(gameGrid[row], White, Black);
     }
 }
 
 
 
-
-void color_printf(char* str, int fore, int back)
+static void take_game_input()
 {
-    HANDLE hConsole;
-    hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-    SetConsoleTextAttribute(hConsole, fore + 16*back);
-    printf(str);
-    SetConsoleTextAttribute(hConsole, White + 16*Black);
-}
 
-#endif
+}

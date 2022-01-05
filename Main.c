@@ -1,12 +1,10 @@
-#ifndef _MAIN_
-#define _MAIN_
 #include "Game Loop.c"
 #include "Menu.c"
 #include "Constants.h"
 
 
 
-int message = MS_MENU;
+int message = MS_NEWGAME;
 char gDifficulty = DIFF_HARD;
 char gMode = MODE_2;
 
@@ -18,7 +16,7 @@ int main()
     {
         switch (message)
         {
-            case MS_STARTGAME:
+            case MS_NEWGAME:
                 message = load_game(gDifficulty,gMode);
                 break;
             case MS_MENU:
@@ -41,10 +39,6 @@ int main()
                 return 0;
         }
     }
-
-
     end:
     return 0;
 }
-
-#endif
