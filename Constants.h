@@ -1,5 +1,5 @@
-#ifndef GRID_COLORS
-#define GRID_COLORS
+#ifndef _CONSTANTS_
+#define _CONSTANTS_
 
 //Constants related to drawing the grid.
 #define VLine 186

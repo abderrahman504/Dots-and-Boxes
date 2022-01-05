@@ -1,10 +1,12 @@
+#ifndef _MAIN_
+#define _MAIN_
 #include "Game Loop.c"
 #include "Menu.c"
 #include "Constants.h"
 
 
 
-int message = MS_STARTGAME;
+int message = MS_MENU;
 char gDifficulty = DIFF_HARD;
 char gMode = MODE_2;
 
@@ -44,3 +46,5 @@ int main()
     end:
     return 0;
 }
+
+#endif

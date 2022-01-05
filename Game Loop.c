@@ -1,3 +1,5 @@
+#ifndef _GAME_LOOP_
+#define _GAME_LOOP_
 #include <stdio.h>
 #include <windows.h> // WinApi header
 #include <stdlib.h>
@@ -227,3 +229,5 @@ void color_printf(char* str, int fore, int back)
     printf(str);
     SetConsoleTextAttribute(hConsole, White + 16*Black);
 }
+
+#endif
