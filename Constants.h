@@ -1,6 +1,7 @@
 #ifndef _CONSTANTS_
 #define _CONSTANTS_
 #include <windows.h>
+#include <stdio.h>
 
 //Constants related to drawing the grid.
 #define VLine 186
@@ -48,7 +49,5 @@ void color_printf(char* str, int fore, int back)
     printf(str);
     SetConsoleTextAttribute(hConsole, White + 16*Black);
 }
-
-
 
 #endif

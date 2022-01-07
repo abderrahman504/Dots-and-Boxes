@@ -4,9 +4,7 @@
 
 
 
-int message = MS_NEWGAME;
-char gDifficulty = DIFF_HARD;
-char gMode = MODE_2;
+int message = MS_MENU;
 
 
 
