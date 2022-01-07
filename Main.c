@@ -1,3 +1,4 @@
+#include <windows.h>
 #include "Game Loop.c"
 #include "Menu.c"
 #include "Constants.h"
@@ -10,6 +11,10 @@ int message = MS_MENU;
 
 int main()
 {
+    
+    HANDLE hConsole;
+    hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    SetConsoleTextAttribute(hConsole, White + 16*Black);
     while (1)
     {
         switch (message)
