@@ -1,9 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "Constants.h"
+
+#include <math.h>
+#define CR "\x1b[31m"
+#define CB "\x1b[34m"
+#define CG "\x1b[32m"
+#define CReset "\x1b[0m"
 #define MAX_NAME 50
-#define GRID_SMALL 2
-#define GRID_LARGE 5
 
 
 struct player
@@ -12,223 +16,557 @@ struct player
     int score;
     char name[MAX_NAME];
     int linesDrawn;
-};
+} player1, player2;
 
-int load_game(int difficulty, char game_Mode);
-static int set_grid(int difficulty);
-static void set_mode(char game_mode);
-static void reset_stats();
-static void reset_player(struct player fplayer);
-static void update_stats(char line_drawn, int new_line[2]);
-static char check_new_boxes(int new_line[2]);
-static void update_grid(int new_line[2]);
-static void update_screen();
-static void take_game_input();
-void send_message();
+int size, n = 0, remaining_lines = 0, ver_lines = 0, hor_lines = 0, number_of_player = 0;
+int array[100][100] = {0};
 
 
-//game stats
-struct player player1; //Structure that contains player 1's stats.
-struct player player2; //Structure that contains player 2's stats.
-struct player playingPlayer;
-char** gameGrid; //The grid of the game.
-char gameMode;
-int gridSize;
-int gridWidth;
-int gridHeight;
-int turn = 0;
-int linesRemaining;
-double gameTime; 
-char** lines; //This is a 2d array that stores the state and color of all lines in the game.
-char** boxed; //This is a 2d array that stores the state and color of all boxes in the game
+int load_game(int difficulity, int mode);
+void reset_player(struct player fplayer);
+int greater(int x,int y);
+void control_line(int row, int col, int hor_line[n + 1][n], int ver_line[n][n + 1], char grid[size][size], int player);
+void write_grid(char grid[size][size], int size);
+void first_player(char grid[size][size], int hor_line[n + 1][n], int ver_line[n][n + 1]);
+void second_player(char grid[size][size], int hor_line[n + 1][n], int ver_line[n][n + 1]);
+void info(void);
+void add_to_leaderboard(char name[MAX_NAME], int score);
 
-
-
-//The function that runs while a game is being played.
-int load_game(int difficulty, char game_mode)
+int load_game(int difficulty, int mode)
 {
-    char lineDrawn = 0; //Boolean to check if a line has been drawn this turn. 
-    int newLine[2];//Index of the new line in the lines array.
-    char err = 0; //Variable that's used to check if a function faced an error during execution.
-    playingPlayer = player1;
-
-    err = set_grid(difficulty);
-    if (err == -1)
+    system("cls");
+    getName1:
+    printf("Player 1, Enter your name: ");
+    fgets(player1.name, MAX_NAME, stdin);
+    if (player1.name[0] == '\n')
     {
-        getchar();
-        return -1;
+        system("cls");
+        color_printf("You didn't enter a name.\n", Red, Black);
+        goto getName1;
     }
-
-    set_mode(game_mode);
-    reset_stats(playingPlayer);
-    while (1)
+    for (int i=0; i<MAX_NAME; i++)
     {
-        update_stats(lineDrawn, newLine);
-        update_screen();
-        take_game_input();
-    }
-    printf("About to end execution.");
-    getchar();
-    return 0;
-}
-
-
-
-//Determines the size of the grid based on the difficulty then constructs the grid that will be drawn.
-//Also sets the lines 2d array to all zeroes.
-static int set_grid(int difficulty)
-{
-    switch (difficulty)
-    {
-        case DIFF_EASY:
-            gridSize = GRID_SMALL;
-            gridWidth = GRID_SMALL;
-            gridHeight = GRID_SMALL;
-            break;
-        case DIFF_HARD:
-            gridSize = GRID_LARGE;
-            gridWidth = GRID_LARGE;
-            gridHeight = GRID_LARGE;
-            break;
-        default:
-            printf("Error at set_grid(). Unexpected value for difficulty.\n");
-            getchar(); //Pausing execution with getchar().
-            fflush(stdin);
-    }
-    gameGrid = (char**) malloc((2*gridHeight+1)*sizeof(char*));
-    if (gameGrid == NULL)
-    {
-        printf("Could not allocate memory for Gamegrid.\n");
-        return -1;
-    }
-    lines = (char**) malloc((2*gridHeight+1)*sizeof(char*));
-    if (lines == NULL)
-    {
-        printf("Could not allocate memory for lines.\n");
-        return -1;
-    }
-    for (int i=0; i<2*gridHeight+1; i++)
-    {
-        char* row = (char*) malloc((3+gridWidth*(HLineWidth+1))*sizeof(char));
-        if (row == NULL)
+        if (player1.name[i] == '\n')
         {
-            printf("Could not allocate memory for a row in gameGrid.\n");
-            return -1;
+            player1.name[i] = 0;
+            break;
         }
-        switch (i%2)
-        {
-            char* lineRow;
-            case 0:
-            //Setting a row in gameGrid.
-                for (int j=0; j<gridWidth; j++)
-                {
-                    row[(HLineWidth+1)*j] = SmallBox;
-                    for (int k=1; k<=HLineWidth; k++) row[5*j+k] = ' ';
-                }
-                row[gridWidth*(HLineWidth+1)] = SmallBox;
-            //Setting a row in lines.
-                lineRow = (char*) malloc(gridWidth*sizeof(char));
-                for (int j=0; j<gridWidth; j++) lineRow[j] = 0;
-                lines[i] = lineRow;
-                break;
-            case 1:
-            //Setting a row in gameGrid.
-                for (int j=0; j<gridWidth*(HLineWidth+1)+1; j++) row[j] = ' ';
-            //Setting a row in lines.
-                lineRow = (char*) malloc((gridWidth+1)*sizeof(char));
-                for (int j=0; j<gridWidth+1; j++) lineRow[j] = 0;
-                lines[i] = lineRow;
-                break;
-        }
-        row[gridWidth*(HLineWidth+1)+1] = '\n';
-        row[gridWidth*(HLineWidth+1)+2] = '\0';
-        gameGrid[i] = row;
     }
-}
-
-
-
-static void set_mode(char game_mode)
-{
-    gameMode = game_mode;
-}
-
-
-
-static void reset_stats()
-{
+    printf("\n");
+    strcpy(player2.name, "Computer");
+    if (mode == MODE_2)
+    {
+        getName2:
+        printf("Player 2, Enter your name: ");
+        fgets(player2.name, MAX_NAME, stdin);
+        if (player2.name[0] == '\n')
+        {
+            system("cls");
+            color_printf("You didn't enter a name.\n", Red, Black);
+            goto getName2;
+        }
+        for (int i=0; i<MAX_NAME; i++)
+    {
+        if (player2.name[i] == '\n')
+        {
+            player2.name[i] = 0;
+            break;
+        }
+    }
+        printf("\n");
+    }
     player1.id = 1;
     player2.id = 2;
     reset_player(player1);
     reset_player(player2);
-    turn = 0;
-    gameTime = 0;
-    linesRemaining = gridHeight*(gridWidth+1) + gridWidth*(gridHeight+1); 
+    n = difficulty;
+    number_of_player = mode;
 
+    /* Old Code to get the difficulity and game mode.
+    // read size of grid game from user
+    do {
+        system("cls");
+		printf(CG "\tlevel(2 for beginner and 5 for expert): " CReset);
+	} while (!scanf("%d", &n) && getchar());
+    // read game mode from user
+    do {
+        system("cls");
+		printf(CG "\t\tone or two player?: " CReset);
+	} while (!scanf("%d", &number_of_player) && getchar() && (number_of_player != 1 || number_of_player != 2));
+*/
+
+    // create array to store horizontal lines
+    int hor_line[n + 1][n], ver_line[n][n + 1];
+    for (int r = 0; r < n + 1; r++){
+        for (int t = 0; t < n; t++){
+            hor_line[r][t] = 0;
+        }
+    }
+    // create array to store vertical lines
+    for (int f = 0; f < n; f++){
+        for (int u = 0; u < n + 1; u++){
+            ver_line[f][u] = 0;
+        }
+    }
+    // size of grid
+    size = 2 * n + 2;
+    // create array which represent the grid on the screen
+    int z = 1;
+    char grid[size][size];
+    // put numbers before rows and above columns
+    for (int m = 1; m < size; m++){
+        grid[0][m] = z;
+        grid[m][0] = z;
+        z++;
+    }
+    grid[0][0] = 0;
+    remaining_lines = 2 * n *(n + 1);
+    // store empty element in grid array
+    for (int i = 1; i < size; i++){
+        for (int j = 1; j < size; j++){
+             grid[i][j] = 32;
+        }
+    }
+    // create dots on grid
+    for (int x = 1; x < size; x = x + 2){
+        for (int y = 1; y < size; y = y + 2){
+            grid[x][y] = 254;
+        }
+    }
+    // write grid on the screen
+    write_grid(grid, size);
+    info();
+    // call first player function
+    first_player(grid, hor_line, ver_line);
+    printf("Press Enter to go to Menu.\n");
+    fflush(stdin);
+    getchar();
+    fflush(stdin);
+    return MS_MENU;
 }
 
-static void reset_player(struct player fplayer)
+//Function that resets each player structure.
+void reset_player(struct player fplayer)
 {
     fplayer.score = 0;
     fplayer.linesDrawn = 0;
-
-    return;
+    
 }
 
+// function for first player
+void first_player(char grid[size][size], int hor_line[n + 1][n], int ver_line[n + 1][n]){
+    if (remaining_lines == 0){
+        return;
+    }else{
+        int row, col,row_1, row_2, col_1, col_2;
+        // take a move from first player
+        do {
+            system("cls");
+            write_grid(grid, size);
+            info();
+            printf(CR " player(1)(row row col col): " CReset);
+        } while (!scanf("%d %d %d %d", &row_1, &row_2, &col_1, &col_2) && getchar() );
 
+        if (row_1 == row_2){  // check if the player chooses horizontal line
+            row = row_1;
+            col = greater(col_1, col_2) - 1;
+            // check a move is valid or not
+            if ((row % 2 == 0 && col % 2 == 0)|| fabs(col_1 - col_2) != 2){
+                system("cls");
+                write_grid(grid, size);
+                info();
+                first_player(grid, hor_line, ver_line);
+            }else{
+                // check the place which first player chooses is empty or not
+                if (grid[row][col] == 32){
+                grid[row][col] = 196;
+                array[row][col] = 1;
+                remaining_lines--;
+                player1.linesDrawn++;
+                system("cls");
+                write_grid(grid, size);
+                info();
 
-static void update_stats(char line_drawn, int new_line[2])
-{
-    if (line_drawn)
-    {
-        lines[new_line[0]][new_line[1]] = playingPlayer.id;
-        char boxDrawn = check_new_boxes(new_line);
+                // call control function to check the player close boxes or not
+                control_line(row, col, hor_line, ver_line, grid, 1);
+                }else{
+                    system("cls");
+                    write_grid(grid, size);
+                    info();
+                    first_player(grid, hor_line, ver_line);
+                }
+            }
+
+        }else if (col_1 == col_2){ //check if the player chooses vertical line
+            col = col_1;
+            row = greater(row_1, row_2) - 1;
+            // check a move is valid or not
+            if ((row % 2 == 0 && col % 2 == 0) || fabs(row_1 - row_2) != 2){
+                system("cls");
+                write_grid(grid, size);
+                info();
+                first_player(grid, hor_line, ver_line);
+            }else{
+                if (grid[row][col] == 32){
+                grid[row][col] = 179;
+                array[row][col] = 1;
+                remaining_lines--;
+                player1.linesDrawn++;
+                system("cls");
+                write_grid(grid, size);
+                info();
+
+                // call control function to check the player closes boxes or not
+                control_line(row, col, hor_line, ver_line,grid, 1);
+                }else{
+                    system("cls");
+                    write_grid(grid, size);
+                    info();
+                    first_player(grid, hor_line, ver_line);
+                }
+            }
+
+        }else{
+            system("cls");
+            write_grid(grid, size);
+            info();
+            first_player(grid, hor_line, ver_line);
+        }
     }
 }
-
-static char check_new_boxes(int new_line[2])
-{
-    switch (new_line[0]%2)
-        {
-            case 0: //Need to check:
-            //1.The row above and below; the lines at the same column and the next column
-            //2.The row above and below by 2; the lines at the same column.
-
+// function for computer player(if player vs computer, call it)
+void computer(char grid[size][size], int hor_line[n + 1][n], int ver_line[n][n + 1]){
+    int found = 0, row = 0, col = 0;
+    if (remaining_lines == 0){
+        return;
+    }else{
+        // choose horizontal line and check is empty or not
+        for (int i = 0; i < n + 1;i++){
+            for (int j = 0; j < n;j++){
+                if (hor_line[i][j] == 0){
+                    grid[2 * i + 1][2 * j + 2] = 196;
+                    array[2 * i + 1][2 * j + 2] = 2;
+                    player2.linesDrawn++;
+                    system("cls");
+                    write_grid(grid, size);
+                    info();
+                    row = 2 * i + 1;
+                    col = 2 * j + 2;
+                    remaining_lines--;
+                    found = -1;
+                    // call control function to check the player close boxes or not
+                    control_line(row, col, hor_line, ver_line,grid, 2);
+                    break;
+                }else if (ver_line[j][i] == 0){//choose vertical line and check is empty or not
+                    grid[2 * j + 2][2 * i + 1] = 179;
+                    array[2 * j + 2][2 * i + 1] = 2;
+                    player2.linesDrawn++;
+                    system("cls");
+                    write_grid(grid, size);
+                    info();
+                    row = 2 * j + 2;
+                    col = 2 * i + 1;
+                    remaining_lines--;
+                    found = -1;
+                    control_line(row, col, hor_line, ver_line,grid, 2);
+                    break;
+                }
+            }
+            if (found == -1){
+                found = 0;
                 break;
+            }
         }
+
+    }
+
+
 }
 
-
-
-static void update_screen()
-{
-    system("cls");
-    char* HNumbers = (char*) malloc(((HLineWidth+1)*gridWidth + 3)*sizeof(char));
-    HNumbers[0] = '1';
-    for (int i=1; i<=gridWidth; i++)
-    {
-        for (int j=1; j<=HLineWidth; j++)
-        {
-            HNumbers[(i-1)*(HLineWidth+1)+j] = ' ';
-        }
-        HNumbers[i*(HLineWidth+1)] = '0' + i+1;
+// second player function
+void second_player(char grid[size][size], int hor_line[n + 1][n], int ver_line[n][n + 1]){
+    if (remaining_lines == 0){
+        return;
     }
-    HNumbers[(HLineWidth+1)*gridWidth + 1] = '\n';
-    HNumbers[(HLineWidth+1)*gridWidth + 2] = '\0';
-    printf("\t");
-    color_printf(HNumbers, Yellow, Black);
+    else{
+        int row, col,row_1, row_2, col_1, col_2;
+        // take a move from first player
+        do {
+            system("cls");
+            write_grid(grid, size);
+            info();
+            printf(CB " player(2)(row row col col): " CReset);
+        } while (!scanf("%d %d %d %d", &row_1, &row_2, &col_1, &col_2) && getchar() );
+        if (row_1 == row_2){ // check if the player chooses horizontal line
+            row = row_1;
+            col = greater(col_1, col_2) - 1;
+            // check a move is valid or not
+            if ((row % 2 == 0 && col % 2 == 0) || fabs(col_1 - col_2) != 2){
+                system("cls");
+                write_grid(grid, size);
+                info();
+                second_player(grid, hor_line, ver_line);
+            }else{   // check the place which first player chooses is empty or not
+                if (grid[row][col] == 32){
+                grid[row][col] = 196;
+                array[row][col] = 2;
+                remaining_lines--;
+                player2.linesDrawn++;
+                system("cls");
+                write_grid(grid, size);
+                info();
 
-    for (int row=0; row< 2*gridHeight+1; row++)
-    {
-        printf("\t");
-        color_printf(gameGrid[row], Yellow, Black);
+                // call control function to check the player close boxes or not
+                control_line(row, col, hor_line, ver_line,grid, 2);
+                }else{
+                    system("cls");
+                    write_grid(grid, size);
+                    info();
+                    second_player(grid, hor_line, ver_line);
+                }
+            }
+
+        }else if (col_1 == col_2){ // check if the player chooses vertical line
+            col = col_1;
+            row = greater(row_1, row_2) - 1;
+            // check a move is valid or not
+            if ((row % 2 == 0 && col % 2 == 0) || fabs(row_1 - row_2) != 2){
+                system("cls");
+                write_grid(grid, size);
+                info();
+                second_player(grid, hor_line, ver_line);
+            }else{ // check the place which first player chooses is empty or not
+                if (grid[row][col] == 32){
+                grid[row][col] = 179;
+                array[row][col] = 2;
+                remaining_lines--;
+                player2.linesDrawn++;
+                system("cls");
+                write_grid(grid, size);
+                info();
+
+                // call control function to check the player close boxes or not
+                control_line(row, col, hor_line, ver_line,grid, 2);
+                }else{
+                    system("cls");
+                    write_grid(grid, size);
+                    info();
+                    second_player(grid, hor_line, ver_line);
+                }
+            }
+
+        }else{
+            system("cls");
+            write_grid(grid, size);
+            info();
+            second_player(grid, hor_line, ver_line);
+        }
     }
 }
+// control line function
+void control_line(int row, int col, int hor_line[n + 1][n], int ver_line[n][n + 1], char grid[size][size], int player){
+    int score_player = 0, box_win_row_af = 0, box_win_col_af = 0, box_win_row_bef = 0, box_win_col_bef = 0;
+    if (row % 2 == 1 && col % 2 == 0){ // player chooses horizontal line
+        hor_line[row/2][col/2 - 1] = player;
+        // check if the player close box below the horizontal line played by him
+        if (row != size - 1){
+            if (hor_line[row/2 + 1][col/2 - 1] != 0){
+                if (ver_line[row / 2][(col - 1)/2] != 0 && ver_line[row / 2][(col + 1)/2] != 0){
+                    score_player++;
+                    box_win_row_af = row + 1;
+                    box_win_col_af = col;
+                }
+            }
+        }
+        // check if the player close box above the horizontal line played by him
+        if (row != 1){
+           if (hor_line[row/2 - 1][col/2 - 1] != 0){
+                if (ver_line[row / 2 - 1][(col - 1)/2] != 0 && ver_line[row / 2 - 1][(col + 1)/2] != 0){
+                    score_player++;
+                    box_win_row_bef = row - 1;
+                    box_win_col_bef = col;
+                }
+            }
+        }
+        // check to let player to play another move or not
+        if (score_player > 0 && player == 1){
+            player1.score += score_player;
+            if (box_win_row_af != 0){
+                grid[box_win_row_af][box_win_col_af] = 254;
+                array[box_win_row_af][box_win_col_af] = 1;
+            }
+            if (box_win_row_bef != 0){
+                grid[box_win_row_bef][box_win_col_bef] = 254;
+                array[box_win_row_bef][box_win_col_bef] = 1;
+            }
+            system("cls");
+            write_grid(grid, size);
+            info();
+            first_player(grid, hor_line, ver_line);
+            score_player = 0;
+        }else if (score_player > 0 && player == 2){
+             player2.score += score_player;
+            if (box_win_row_af != 0){
+                grid[box_win_row_af][box_win_col_af] = 254;
+                array[box_win_row_af][box_win_col_af] = 2;
+            }
+            if (box_win_row_bef != 0){
+                grid[box_win_row_bef][box_win_col_bef] = 254;
+                array[box_win_row_bef][box_win_col_bef] = 2;
+            }
+            system("cls");
+            write_grid(grid, size);
+            info();
+            if (number_of_player == 2){
+                second_player(grid, hor_line, ver_line);
+            }else {
+                computer(grid, hor_line, ver_line);
+            }
+            score_player = 0;
+        }else{
+            if (score_player == 0 && player == 1){
+                if (number_of_player == 2){
+                    second_player(grid, hor_line, ver_line);
+                }else {
+                    computer(grid, hor_line, ver_line);
+                }
+            }else if (score_player == 0 && player == 2){
+                first_player(grid, hor_line, ver_line);
+            }
+        }
+    }
+    else if (row % 2 == 0 && col % 2 == 1){ // player choose vertical line
+        ver_line[row/2 - 1][col/2 ] = player;
+        // check if the player close box on the right of the vertical line played by him
+        if (col != size - 1){
+            if (ver_line[row/2 - 1][col/2 + 1] != 0){
+                if (hor_line[row/2 - 1][col/2] != 0 && hor_line[row/2][col/2] != 0){
+                    score_player++;
+                    box_win_row_af = row;
+                    box_win_col_af = col + 1;
+                }
+            }
+        }
+        // check if the player close box on the left of the vertical line played by him
+        if (col != 1){
+            if (ver_line[row/2 - 1][col/2 - 1] != 0){
+                if (hor_line[row/2 - 1][col/2 - 1] != 0 && hor_line[row/2][col/2 - 1] != 0){
+                    score_player++;
+                    box_win_row_bef = row;
+                    box_win_col_bef = col - 1;
+                }
+            }
+        }
+        // check to let player to play another move or not
+        if (score_player > 0 && player == 1){
+             player1.score += score_player;
+            if (box_win_row_af != 0){
+                grid[box_win_row_af][box_win_col_af] = 254;
+                array[box_win_row_af][box_win_col_af] = 1;
+            }
+            if (box_win_row_bef != 0){
+                grid[box_win_row_bef][box_win_col_bef] = 254;
+                array[box_win_row_bef][box_win_col_bef] = 1;
+            }
+            system("cls");
+            write_grid(grid, size);
+            info();
+            first_player(grid, hor_line, ver_line);
+            score_player = 0;
+        }else if (score_player > 0 && player == 2){
+            player2.score += score_player;
+            if (box_win_row_af != 0){
+                grid[box_win_row_af][box_win_col_af] = 254;
+                array[box_win_row_af][box_win_col_af] = 2;
+            }
+            if (box_win_row_bef != 0){
+                grid[box_win_row_bef][box_win_col_bef] = 254;
+                array[box_win_row_bef][box_win_col_bef] = 2;
+            }
+            system("cls");
+            write_grid(grid, size);
+            info();
+            if (number_of_player == 2){
+                second_player(grid, hor_line, ver_line);
+            }else {
+                computer(grid, hor_line, ver_line);
+            }
+            score_player = 0;
+        }else{
+            if (score_player == 0 && player == 1){
+                if (number_of_player == 2){
+                    second_player(grid, hor_line, ver_line);
+                }else {
+                    computer(grid, hor_line, ver_line);
+                }
+            }else if (score_player == 0 && player == 2){
+                first_player(grid, hor_line, ver_line);
+            }
+        }
+    }
+}
+int greater(int x,int y){
 
+    if (x > y){
+        return x;
+    }
+    else{
+        return y;
+    }
+}
+// write grid
+void write_grid(char grid[size][size], int size){
 
+    for (int i = 0; i < size; i++){
+        for (int j = 0; j < size; j++){
+            if (j == 0){
+                printf(CG "%2d " CReset, grid[i][j]);
+            }
+             else if(i == 0){
+                printf(CG "%d " CReset, grid[i][j]);
+            }else{
+                if (array[i][j] == 1){
+                    printf(CR "%c " CReset, grid[i][j]);
+                }else if (array[i][j] == 2){
+                    printf(CB "%c " CReset, grid[i][j]);
+                }else{
+                    printf(CG "%c " CReset, grid[i][j]);
+                }
+            }
+        }
+        printf("\n");
+    }
+}
+// write information about player
+void info(void){
 
-static void take_game_input()
+    printf(CG "\n remaining lines: %d\n" CReset, remaining_lines);
+    printf(CG " ------------------------------------------\n" CReset);
+    printf(CR " player(1) score: %d\t Number of moves: %d\n" CReset, player1.score, player1.linesDrawn);
+    printf(CG " ------------------------------------------\n" CReset);
+    printf(CB " player(2) score: %d\t Number of moves: %d\n" CReset, player2.score , player2.linesDrawn);
+    printf(CG " ------------------------------------------\n" CReset);
+    if (remaining_lines == 0){
+        if (player1.score > player2.score){
+            printf(CR " player 1 is the winner \n" CReset);
+            add_to_leaderboard(player1.name, player1.score);
+        }else if (player1.score < player2.score){
+            printf(CB " player 2 is the winner\n" CReset);
+            add_to_leaderboard(player2.name, player2.score);
+        }else{
+            printf(" Equal\n");
+            add_to_leaderboard(player1.name, player1.score);
+            add_to_leaderboard(player2.name, player2.score);
+        }
+    }
+}
+//int check[][4] = {0};
+//check[][]
+
+void add_to_leaderboard(char name[MAX_NAME], int score)
 {
-    getchar();
-
+    FILE*  board = fopen("Leaderboard.txt","a");
+    fprintf(board, name);
+    fprintf(board, "\t%d\n", score);
+    fclose(board);
 }

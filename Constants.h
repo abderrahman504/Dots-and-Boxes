@@ -12,8 +12,6 @@
 //Constants related to starting a game.
 #define MODE_1 1
 #define MODE_2 2
-#define DIFF_EASY 1
-#define DIFF_HARD 2
 //Constants for control messages.
 #define MS_EXIT 0
 #define MS_NEWGAME 1

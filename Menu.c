@@ -18,7 +18,7 @@ const char MENUTEXT[150] = "\nWelcome to Dots and Boxes\n\
 Select an option (for example, enter \"1\" to select \"New Game\")\n";
 
 const char DIFFTEXT[160] = "\n\
-Enter the size of the grid you want to play on (we don't recommend you set a size larger than 9):\n\
+Enter the size of the grid you want to play on (Choose a number between 2 and 9):\n\
 \t0-Back to menu\n\n";
 
 const char MODETEXT[70] = "\n\
@@ -29,7 +29,6 @@ Select Game Mode:\n\
 
 const char invalidInput[40] = "Invalid input. Please try again\n"; 
 const char tooLongInput[44] = "Your input was too long. Please try again.\n";
-const char tooLargeGrid[68] = "The size you provided is not allowed. Try a number between 2 and 9\n";
 
 int load_menu();
 static void draw_menu();
@@ -65,16 +64,6 @@ int load_menu()
         case BackToMenu:
             goto start;
         case New: //inputResult is New when the player has chosen difficulty and mode.
-            printf("Player 1, Enter your name: ");
-            fgets(player1.name, MAX_NAME, stdin);
-            printf("\n");
-            strcpy(player2.name, "Computer");
-            if (gMode == MODE_2)
-            {
-                printf("Player 2, Enter your name: ");
-                fgets(player2.name, MAX_NAME, stdin);
-                printf("\n");
-            }
             message = MS_NEWGAME;
             break;
         case Diff: //inputResult is Diff when the player chooses the new game option.
@@ -159,30 +148,30 @@ int take_diff_input()
         fflush(stdin);
         if(inputStr[0] == '\n')
         {
-            draw_menu();
+            draw_diff_selection();
             color_printf(invalidInput, Red, Black);
             continue;
         }
         if (inputStr[1] != '\n')
         {
             draw_diff_selection();
-            color_printf(tooLongInput, Red, Black);
+            color_printf(invalidInput, Red, Black);
             continue;
         }
         int input = inputStr[0]-'0';
+        if ((input < 2 || input > 9) && input != 0) 
+        {
+            draw_diff_selection();
+            color_printf(invalidInput, Red, Black);
+            continue;
+        }
         switch (input)
         {
-            case 1:
-                gDifficulty = DIFF_EASY;
-                return Mode;
-            case 2:
-                gDifficulty = DIFF_HARD;
-                return Mode;
-            case 3:
+            case 0:
                 return BackToMenu;
             default:
-                draw_diff_selection();
-                color_printf(invalidInput, Red, Black);
+                gDifficulty = input;
+                return Mode;
         }
     }
 }
@@ -202,7 +191,7 @@ int take_mode_input()
         fflush(stdin);
         if(inputStr[0] == '\n')
         {
-            draw_menu();
+            draw_mode_selection();
             color_printf(invalidInput, Red, Black);
             continue;
         }
