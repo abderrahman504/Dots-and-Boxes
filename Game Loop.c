@@ -34,10 +34,13 @@ struct player playingPlayer;
 char** gameGrid; //The grid of the game.
 char gameMode;
 int gridSize;
+int gridWidth;
+int gridHeight;
 int turn = 0;
 int linesRemaining;
 double gameTime; 
-char** lines; //This is a 2d array that stores the state of all lines in the game.
+char** lines; //This is a 2d array that stores the state and color of all lines in the game.
+char** boxed; //This is a 2d array that stores the state and color of all boxes in the game
 
 
 
@@ -79,30 +82,34 @@ static int set_grid(int difficulty)
     {
         case DIFF_EASY:
             gridSize = GRID_SMALL;
+            gridWidth = GRID_SMALL;
+            gridHeight = GRID_SMALL;
             break;
         case DIFF_HARD:
             gridSize = GRID_LARGE;
+            gridWidth = GRID_LARGE;
+            gridHeight = GRID_LARGE;
             break;
         default:
             printf("Error at set_grid(). Unexpected value for difficulty.\n");
             getchar(); //Pausing execution with getchar().
             fflush(stdin);
     }
-    gameGrid = (char**) malloc((2*gridSize+1)*sizeof(char*));
+    gameGrid = (char**) malloc((2*gridHeight+1)*sizeof(char*));
     if (gameGrid == NULL)
     {
         printf("Could not allocate memory for Gamegrid.\n");
         return -1;
     }
-    lines = (char**) malloc((2*gridSize+1)*sizeof(char*));
+    lines = (char**) malloc((2*gridHeight+1)*sizeof(char*));
     if (lines == NULL)
     {
         printf("Could not allocate memory for lines.\n");
         return -1;
     }
-    for (int i=0; i<2*gridSize+1; i++)
+    for (int i=0; i<2*gridHeight+1; i++)
     {
-        char* row = (char*) malloc((3+gridSize*(HLineWidth+1))*sizeof(char));
+        char* row = (char*) malloc((3+gridWidth*(HLineWidth+1))*sizeof(char));
         if (row == NULL)
         {
             printf("Could not allocate memory for a row in gameGrid.\n");
@@ -113,28 +120,28 @@ static int set_grid(int difficulty)
             char* lineRow;
             case 0:
             //Setting a row in gameGrid.
-                for (int j=0; j<gridSize; j++)
+                for (int j=0; j<gridWidth; j++)
                 {
-                    row[5*j] = SmallBox;
+                    row[(HLineWidth+1)*j] = SmallBox;
                     for (int k=1; k<=HLineWidth; k++) row[5*j+k] = ' ';
                 }
-                row[gridSize*(HLineWidth+1)] = SmallBox;
+                row[gridWidth*(HLineWidth+1)] = SmallBox;
             //Setting a row in lines.
-                lineRow = (char*) malloc(gridSize*sizeof(char));
-                for (int j=0; j<gridSize; j++) lineRow[j] = 0;
+                lineRow = (char*) malloc(gridWidth*sizeof(char));
+                for (int j=0; j<gridWidth; j++) lineRow[j] = 0;
                 lines[i] = lineRow;
                 break;
             case 1:
             //Setting a row in gameGrid.
-                for (int j=0; j<gridSize*(HLineWidth+1)+1; j++) row[j] = ' ';
+                for (int j=0; j<gridWidth*(HLineWidth+1)+1; j++) row[j] = ' ';
             //Setting a row in lines.
-                lineRow = (char*) malloc((gridSize+1)*sizeof(char));
-                for (int j=0; j<gridSize+1; j++) lineRow[j] = 0;
+                lineRow = (char*) malloc((gridWidth+1)*sizeof(char));
+                for (int j=0; j<gridWidth+1; j++) lineRow[j] = 0;
                 lines[i] = lineRow;
                 break;
         }
-        row[gridSize*(HLineWidth+1)+1] = '\n';
-        row[gridSize*(HLineWidth+1)+2] = '\0';
+        row[gridWidth*(HLineWidth+1)+1] = '\n';
+        row[gridWidth*(HLineWidth+1)+2] = '\0';
         gameGrid[i] = row;
     }
 }
@@ -152,22 +159,11 @@ static void reset_stats()
 {
     player1.id = 1;
     player2.id = 2;
-    
-    printf("Player 1, Enter your name: ");
-    gets(player1.name);
-    printf("\n");
     reset_player(player1);
-    strcpy(player2.name, "Computer");
-    if (gameMode == MODE_2)
-    {
-        printf("Player 2, Enter your name: ");
-        gets(player2.name);
-        printf("\n");
-    }
     reset_player(player2);
     turn = 0;
     gameTime = 0;
-    linesRemaining = 2*gridSize*(gridSize+1); 
+    linesRemaining = gridHeight*(gridWidth+1) + gridWidth*(gridHeight+1); 
 
 }
 
@@ -207,10 +203,25 @@ static char check_new_boxes(int new_line[2])
 static void update_screen()
 {
     system("cls");
-    for (int row=0; row< 2*gridSize+1; row++)
+    char* HNumbers = (char*) malloc(((HLineWidth+1)*gridWidth + 3)*sizeof(char));
+    HNumbers[0] = '1';
+    for (int i=1; i<=gridWidth; i++)
+    {
+        for (int j=1; j<=HLineWidth; j++)
+        {
+            HNumbers[(i-1)*(HLineWidth+1)+j] = ' ';
+        }
+        HNumbers[i*(HLineWidth+1)] = '0' + i+1;
+    }
+    HNumbers[(HLineWidth+1)*gridWidth + 1] = '\n';
+    HNumbers[(HLineWidth+1)*gridWidth + 2] = '\0';
+    printf("\t");
+    color_printf(HNumbers, Yellow, Black);
+
+    for (int row=0; row< 2*gridHeight+1; row++)
     {
         printf("\t");
-        color_printf(gameGrid[row], White, Black);
+        color_printf(gameGrid[row], Yellow, Black);
     }
 }
 
@@ -218,5 +229,6 @@ static void update_screen()
 
 static void take_game_input()
 {
+    getchar();
 
 }
