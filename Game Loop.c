@@ -1,16 +1,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "Constants.h"
-
 #include <math.h>
+#include <time.h>
+
 #define CR "\x1b[31m"
 #define CB "\x1b[34m"
 #define CG "\x1b[32m"
 #define CReset "\x1b[0m"
-#define MAX_NAME 50
 
 
-struct player
+static struct player
 {
     char id;
     int score;
@@ -18,19 +18,25 @@ struct player
     int linesDrawn;
 } player1, player2;
 
+static struct boardMembers{
+    char name[MAX_NAME+1];
+    int score;
+};
+
 int size, n = 0, remaining_lines = 0, ver_lines = 0, hor_lines = 0, number_of_player = 0;
 int array[100][100] = {0};
-
+static clock_t gameStart, turnEnd;
 
 int load_game(int difficulity, int mode);
-void reset_player(struct player fplayer);
-int greater(int x,int y);
-void control_line(int row, int col, int hor_line[n + 1][n], int ver_line[n][n + 1], char grid[size][size], int player);
-void write_grid(char grid[size][size], int size);
-void first_player(char grid[size][size], int hor_line[n + 1][n], int ver_line[n][n + 1]);
-void second_player(char grid[size][size], int hor_line[n + 1][n], int ver_line[n][n + 1]);
-void info(void);
-void add_to_leaderboard(char name[MAX_NAME], int score);
+static void reset_player(struct player fplayer);
+static int greater(int x,int y);
+static void control_line(int row, int col, int hor_line[n + 1][n], int ver_line[n][n + 1], char grid[size][size], int player);
+static void write_grid(char grid[size][size], int size);
+static void first_player(char grid[size][size], int hor_line[n + 1][n], int ver_line[n][n + 1]);
+static void second_player(char grid[size][size], int hor_line[n + 1][n], int ver_line[n][n + 1]);
+static void info(void);
+static void add_to_leaderboard(char name[MAX_NAME], int score);
+static void fix_leaderboard();
 
 int load_game(int difficulty, int mode)
 {
@@ -66,13 +72,13 @@ int load_game(int difficulty, int mode)
             goto getName2;
         }
         for (int i=0; i<MAX_NAME; i++)
-    {
-        if (player2.name[i] == '\n')
         {
-            player2.name[i] = 0;
-            break;
+            if (player2.name[i] == '\n')
+            {
+                player2.name[i] = 0;
+                break;
+            }
         }
-    }
         printf("\n");
     }
     player1.id = 1;
@@ -135,6 +141,7 @@ int load_game(int difficulty, int mode)
     }
     // write grid on the screen
     write_grid(grid, size);
+    gameStart = clock();
     info();
     // call first player function
     first_player(grid, hor_line, ver_line);
@@ -546,6 +553,13 @@ void info(void){
     printf(CG " ------------------------------------------\n" CReset);
     printf(CB " player(2) score: %d\t Number of moves: %d\n" CReset, player2.score , player2.linesDrawn);
     printf(CG " ------------------------------------------\n" CReset);
+    turnEnd = clock();
+    int seconds = ((double) (turnEnd-gameStart)) / CLOCKS_PER_SEC;
+    int minutes = seconds / 60;
+    seconds %= 60;
+    printf(CG "Time: %dm : %ds\n" CReset, minutes, seconds);
+    printf(CG " ------------------------------------------\n" CReset);
+
     if (remaining_lines == 0){
         if (player1.score > player2.score){
             printf(CR " player 1 is the winner \n" CReset);
@@ -565,8 +579,90 @@ void info(void){
 
 void add_to_leaderboard(char name[MAX_NAME], int score)
 {
+    for (int i=0; i<MAX_NAME; i++)
+    {
+        if ((name[i]>64) && (name[i]<90)) name[i] += 32;
+    }
     FILE*  board = fopen("Leaderboard.txt","a");
     fprintf(board, name);
-    fprintf(board, "\t%d\n", score);
+    fprintf(board, " %d\n", score);
     fclose(board);
+    fix_leaderboard();
+}
+
+void fix_leaderboard()
+{
+    FILE* fh = fopen("Leaderboard.txt", "r");
+    char line[60];
+    struct boardMembers members[100];
+    int membersLength = 0;
+    for (int i=0; i<100; i++) //Looping through each line in the file.
+    {
+        if(fgets(line, 60, fh) == NULL) break;
+        struct boardMembers member;
+        member.score = 0;
+        char nameFound = 0, lineEmpty = 1;
+        
+        for (int j=0; j<60; j++) //Looping through each character in the line.
+        {
+            if (line[j] == '\n' || line[j] == 0) break;
+            lineEmpty = 0;
+            if (nameFound)
+            {
+                member.score = member.score*10 + (line[j] - '0');
+                continue;
+            }
+            if (line[j] == ' ')
+            {
+                member.name[j] = 0;
+                nameFound = 1;
+                continue;
+            }
+            member.name[j] = line[j];
+        }
+        if (lineEmpty) continue;
+        members[i] = member;
+        membersLength++;
+    }
+    fclose(fh);
+
+    //Sorting the players in the members array by highest score.
+    for (int i = 0; i<membersLength; i++)
+    {
+        for (int j=i+1; j<membersLength; j++)
+        {
+            if (members[j].score > members[i].score)
+            {
+                char temp[MAX_NAME+1];
+                strcpy(temp, members[j].name);
+                int tempScore = members[i].score;
+                strcpy(members[j].name, members[i].name);
+                strcpy(members[i].name, temp);
+                members[i].score = members[j].score;
+                members[j].score = tempScore;
+            }
+        }
+    }
+    //Removing duplicate names.
+    for (int i=0; i<membersLength; i++)
+    {
+        for (int j=i+1; j<membersLength; j++)
+        {
+            if (strcmp(members[i].name, members[j].name) == 0)
+            {
+                members[j].score = -1;
+                continue;
+            }
+        }
+    }
+
+    fh = fopen("Leaderboard.txt", "w");
+    //Rewriting the file.
+    for (int i=0; i<membersLength; i++)
+    {
+        if (members[i].score == -1) continue;
+        fprintf(fh, members[i].name);
+        fprintf(fh, " %d\n", members[i].score);
+    }
+    fclose(fh);
 }

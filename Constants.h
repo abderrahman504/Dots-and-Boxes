@@ -3,6 +3,7 @@
 #include <windows.h>
 #include <stdio.h>
 
+#define MAX_NAME 30
 //Constants related to drawing the grid.
 #define VLine 186
 #define HLine 205
@@ -16,8 +17,6 @@
 #define MS_EXIT 0
 #define MS_NEWGAME 1
 #define MS_MENU 2
-#define MS_SAVES 3
-#define MS_LEADERBOARD 4
 
 enum COLOUR{
     Black,

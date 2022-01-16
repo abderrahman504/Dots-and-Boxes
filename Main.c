@@ -25,17 +25,8 @@ int main()
             case MS_MENU:
                 message = load_menu();
                 break;
-            case MS_SAVES:
-                //message = load_saves();
-                break;
-            case MS_LEADERBOARD:
-                //message = load_leaderboard();
-                break;
             case MS_EXIT:
                 goto end;
-            case -1:
-                getchar();
-                return 0;
             default:
                 printf("Unidentified message value sent to main.\n");
                 getchar(); //pausing the program with getchar().

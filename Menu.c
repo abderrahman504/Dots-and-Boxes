@@ -18,7 +18,7 @@ const char MENUTEXT[150] = "\nWelcome to Dots and Boxes\n\
 Select an option (for example, enter \"1\" to select \"New Game\")\n";
 
 const char DIFFTEXT[160] = "\n\
-Enter the size of the grid you want to play on (Choose a number between 2 and 9):\n\
+Enter the size of the grid you want to play on (Choose a number between 2 and 5):\n\
 \t0-Back to menu\n\n";
 
 const char MODETEXT[70] = "\n\
@@ -159,7 +159,7 @@ int take_diff_input()
             continue;
         }
         int input = inputStr[0]-'0';
-        if ((input < 2 || input > 9) && input != 0) 
+        if ((input < 2 || input > 5) && input != 0) 
         {
             draw_diff_selection();
             color_printf(invalidInput, Red, Black);
@@ -237,8 +237,37 @@ int take_saves_input()
 void draw_leaderboard()
 {
     system("cls");
-    printf("Here should be leaderboard stuff, but we haven't done that yet so meh.\n");
-    printf("Press enter to return to menu.\n");
+    printf("%-35sscore\n", "Player Name");
+    FILE* fh = fopen("Leaderboard.txt", "r");
+    for (int i=0; i<10; i++) //Looping through each line in the file.
+    {
+        char line[MAX_NAME+5];
+        if(fgets(line, 40, fh) == NULL) break;
+        char name[MAX_NAME];
+        int score = 0;
+        char nameFound = 0, lineEmpty = 1;
+        for (int character=0; character<MAX_NAME+5; character++) //Looping through each character in the line.
+        {
+            if (line[character] == '\n' || line[character] == 0) break;
+            lineEmpty = 0;
+            if (nameFound)
+            {
+                score = score*10 + (line[character] - '0');
+                continue;
+            }
+            if (line[character] == ' ')
+            {
+                name[character] = 0;
+                nameFound = 1;
+                continue;
+            }
+            if (lineEmpty) break;
+            name[character] = line[character];
+        }
+        printf("%-35s%d\n", name, score);
+    }
+    fclose(fh);
+    printf("\nPress enter to return to menu.\n");
     char str[3];
     fgets(str, 3, stdin);
     fflush(stdin);
