@@ -67,7 +67,6 @@ static struct position newEdge;//Index of the new edge in the edges array.
 int load_game(int grid_size[2], char game_mode, char save_file[])
 {
     char err = 0; //Variable that's used to check if a function faced an error during execution.
-    playingPlayer = player1;
     gridHeight = grid_size[0];
     gridWidth = grid_size[1];
 
@@ -80,6 +79,7 @@ int load_game(int grid_size[2], char game_mode, char save_file[])
 
     set_mode(game_mode);
     reset_stats();
+    playingPlayer = player1;
     char* afterStatsMessage = EmptyMS; //Message will be printed after the stats.
     while (1)
     {
@@ -343,17 +343,19 @@ static void update_screen(char afterStatsMessage[])
 {
     system("cls");
     set_color(Yellow, Black);
-    printf("\t");
-    for(int i=0; i<gridWidth+1; i++)
+    printf("\t   ");
+    
+    for(int i=0; i<gridWidth+1; i++) // Printing the numbers at the top of the grid.
     {
         printf("%-5d", i+1); //Should change the -5 if HLineWidth is changed later.
     }
-    for (int row=0; row<2*gridHeight+1; row++)
+    printf("\n");
+    for (int row=0; row<2*gridHeight+1; row++) // Printing the grid.
     {
         printf("\t");
         switch (row%2)
         {
-            case 0: //Even row with dots and hlines.
+            case 0: //Even row with dots, hlines and numbers.
             set_color(Yellow, Black);
             printf("%-3d", row/2+1);
             for (int i=0; i<2*gridWidth+1; i++)
@@ -379,6 +381,7 @@ static void update_screen(char afterStatsMessage[])
             break;
 //----------------------------------------------------------------------------------------------
             default: //Odd row with boxes and vlines.
+            printf("   ");
             for (int i=0; i<2*gridWidth+1; i++)
             {
                 switch(i%2)
@@ -451,11 +454,12 @@ static char* take_game_input()
 {
     char input[12] = {};
     fgets(input, 12, stdin);
+    fflush(stdin);
     if (input[11] != '\n' && input[11] != 0) return InvalidInputMS; // Case of too long input.
     if (input[0] == '\n') return InvalidInputMS; // Case of empty input.
-    if(strcmp(input, "exit\n"))// Case of exit input.
+    if(strcmp(input, "exit\n") == 0)// Case of exit input.
     {
-        return "0";
+        return "0"; //The exit signal.
     }
     //Check for save input.
     //Check for undo input.
@@ -488,22 +492,22 @@ static char* take_game_input()
         {
             case 1:
             r1 = 1;
-            p1.row = num;
+            p1.row = num - 1;
             goto coordinateCheckLoopNext;
             
             case 2:
             c1 = 1;
-            p1.col = num;
+            p1.col = num - 1;
             goto coordinateCheckLoopNext;
 
             case 3:
             r2 = 1;
-            p2.row = num;
+            p2.row = num - 1;
             goto coordinateCheckLoopNext;
 
             case 4:
             c2 = 1;
-            p2.col = num;
+            p2.col = num - 1;
             goto coordinateCheckLoopNext;
 
             default:
@@ -533,6 +537,7 @@ static char* take_game_input()
 
 char check_points_legality(struct position p1, struct position p2)
 {
+    if (p1.row < 1 || p1.row > gridHeight+1 || p2.row < 1 || p2.row > gridHeight+1, p1.col < 1 || p1.col > gridWidth+1 || p2.col < 1 || p2.col > gridWidth+1) return WrongPointsMS;
     if ((p1.row == p2.row && abs(p1.col - p2.col) == 1) || (p1.col == p2.col && abs(p1.row - p2.row) == 1)) return 1;
     else return 0;
 }
