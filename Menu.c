@@ -4,10 +4,10 @@
 
 
 
-char gDifficulty;
+int gDifficulty[2]; // Contains height and width of the grid;
 char gMode;
 
-const char MENUTEXT[150] = "\nWelcome to Dots and Boxes\n\
+const char MENUTEXT[] = "\nWelcome to Dots and Boxes\n\
 \n\
 \t1-New Game\n\
 \t2-Load Game\n\
@@ -16,26 +16,32 @@ const char MENUTEXT[150] = "\nWelcome to Dots and Boxes\n\
 \n\
 Select an option (for example, enter \"1\" to select \"New Game\")\n";
 
-const char DIFFTEXT[60] = "\n\
-Select difficulty:\n\
-\t1-Beginner\n\
-\t2-Expert\n\
-\t3-Back to menu\n\n";
+const char DIFFTEXTWIDTH[] = "\n\
+Height is %d. Enter the width of the grid. It should be a number between 2 and 99:\n\
+\t0-Back to menu\n\
+\t1-Enter height again\n\n";
 
-const char MODETEXT[70] = "\n\
+const char DIFFTEXTHEIGHT[] = "\n\
+Enter the height of the grid. It should be a number between 2 and 99:\n\
+\t0-Back to menu\n\n";
+
+const char MODETEXT[] = "\n\
 Select Game Mode:\n\
 \t1-One player mode\n\
 \t2-Two player mode\n\
 \t3-Back\n\n";
 
-const char invalidInput[40] = "Invalid input. Please try again\n"; 
-const char tooLongInput[44] = "Your input was too long. Please try again.\n";
+const char invalidInput[] = "Invalid input. Please try again\n"; 
+const char tooLongInput[] = "Your input was too long. Please try again.\n";
 
 int load_menu();
 static void draw_menu();
 static int take_menu_input();
-static void draw_diff_selection();
-static int take_diff_input();
+static int get_diff();
+static void draw_height_selection();
+static int take_height_input();
+static void draw_width_selection();
+static int take_width_input();
 static void draw_mode_selection();
 static int take_mode_input();
 static void draw_saves_selection();
@@ -55,6 +61,7 @@ enum inputs{
 
 int load_menu()
 {
+    set_color(White, Black);
     int message, inputResult;
     start:
     draw_menu();
@@ -68,8 +75,7 @@ int load_menu()
             message = MS_NEWGAME;
             break;
         case Diff: //inputResult is Diff when the player chooses the new game option.
-            draw_diff_selection();
-            inputResult = take_diff_input();
+            inputResult = get_diff();
             goto switchStart;
         case Mode:
             draw_mode_selection();
@@ -134,12 +140,134 @@ static int take_menu_input()
     }
 }
 
-void draw_diff_selection()
+int get_diff()
 {
-    system("cls");
-    printf(DIFFTEXT);
+    h_start:
+    draw_height_selection();
+    gDifficulty[0] = take_height_input();
+    if (gDifficulty[0] == 0)
+    {
+        return BackToMenu;
+    }
+    draw_width_selection();
+    gDifficulty[1] = take_width_input();
+    if (gDifficulty[1] == 0)
+    {
+        return BackToMenu;
+    }
+    if (gDifficulty[1] == 1)
+    {
+        goto h_start;
+    }
+    return Mode;
 }
 
+void draw_height_selection()
+{
+    system("cls");
+    printf(DIFFTEXTHEIGHT);
+}
+
+int take_height_input()
+{
+    char inputStr[4] = {}; //Height and width values should not be bigger than 2 digits
+    while (1)
+    {
+        fgets(inputStr, 4, stdin);
+        fflush(stdin);
+        if(inputStr[0] == '\n')
+        {
+            draw_height_selection();
+            color_printf(invalidInput, Red, Black);
+            continue;
+        }
+        if (inputStr[2] != '\n' && inputStr[2] != 0)
+        {
+            draw_height_selection();
+            color_printf(tooLongInput, Red, Black);
+            continue;
+        }
+
+        int height = 0;
+        if (inputStr[0] < '0' || inputStr[0] > '9')
+        {
+            draw_height_selection();
+            color_printf(invalidInput, Red, Black);
+            continue;
+        }
+        height = height * 10 + (inputStr[0] - '0');
+        if (inputStr[1] == '\n')
+        {
+            goto h_input_end;
+        }
+        if (inputStr[1] < '0' || inputStr[1] > '9')
+        {
+            draw_height_selection();
+            color_printf(invalidInput, Red, Black);
+            continue;
+        }
+        height = height * 10 + (inputStr[1] - '0');
+        h_input_end:
+        if (height < 2 && height != 0)
+        {
+            draw_height_selection();
+            color_printf(invalidInput, Red, Black);
+            continue;
+        }
+        return height;
+    }
+}
+
+void draw_width_selection()
+{
+    system("cls");
+    printf(DIFFTEXTWIDTH, gDifficulty[0]);
+}
+
+int take_width_input()
+{
+    char inputStr[4] = {}; //Height and width values should not be bigger than 2 digits
+    while (1)
+    {
+        fgets(inputStr, 4, stdin);
+        fflush(stdin);
+        if(inputStr[0] == '\n')
+        {
+            draw_width_selection();
+            color_printf(invalidInput, Red, Black);
+            continue;
+        }
+        if (inputStr[2] != '\n' && inputStr[2] != 0)
+        {
+            draw_width_selection();
+            color_printf(tooLongInput, Red, Black);
+            continue;
+        }
+
+        int width = 0;
+        if (inputStr[0] < '0' || inputStr[0] > '9')
+        {
+            draw_width_selection();
+            color_printf(invalidInput, Red, Black);
+            continue;
+        }
+        width = width * 10 + (inputStr[0] - '0');
+        if (inputStr[1] == '\n')
+        {
+            goto w_input_end;
+        }
+        if (inputStr[1] < '0' || inputStr[1] > '9')
+        {
+            draw_width_selection();
+            color_printf(invalidInput, Red, Black);
+            continue;
+        }
+        width = width * 10 + (inputStr[1] - '0');
+        w_input_end:
+        return width;
+    }
+}
+/*
 int take_diff_input()
 {
     char inputStr[3];
@@ -176,7 +304,7 @@ int take_diff_input()
         }
     }
 }
-
+*/
 void draw_mode_selection()
 {
     system("cls");
@@ -192,7 +320,7 @@ int take_mode_input()
         fflush(stdin);
         if(inputStr[0] == '\n')
         {
-            draw_menu();
+            draw_mode_selection();
             color_printf(invalidInput, Red, Black);
             continue;
         }

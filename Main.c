@@ -36,7 +36,7 @@ int main()
             case -1:
                 getchar();
                 return 0;
-            default:
+            default: // Probably executes when message equals -1.
                 printf("Unidentified message value sent to main.\n");
                 getchar(); //pausing the program with getchar().
                 return 0;
