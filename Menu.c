@@ -7,7 +7,7 @@
 int gDifficulty[2]; // Contains height and width of the grid;
 char gMode;
 
-const char MENUTEXT[] = "\nWelcome to Dots and Boxes\n\
+static char MENUTEXT[] = "\nWelcome to Dots and Boxes\n\
 \n\
 \t1-New Game\n\
 \t2-Load Game\n\
@@ -16,23 +16,22 @@ const char MENUTEXT[] = "\nWelcome to Dots and Boxes\n\
 \n\
 Select an option (for example, enter \"1\" to select \"New Game\")\n";
 
-const char DIFFTEXTWIDTH[] = "\n\
+static char DIFFTEXTWIDTH[] = "\n\
 Height is %d. Enter the width of the grid. It should be a number between 2 and 99:\n\
 \t0-Back to menu\n\
 \t1-Enter height again\n\n";
 
-const char DIFFTEXTHEIGHT[] = "\n\
+static char DIFFTEXTHEIGHT[] = "\n\
 Enter the height of the grid. It should be a number between 2 and 99:\n\
 \t0-Back to menu\n\n";
 
-const char MODETEXT[] = "\n\
+static char MODETEXT[] = "\n\
 Select Game Mode:\n\
 \t1-One player mode\n\
 \t2-Two player mode\n\
 \t3-Back\n\n";
 
-const char invalidInput[] = "Invalid input. Please try again\n"; 
-const char tooLongInput[] = "Your input was too long. Please try again.\n";
+static char invalidInput[] = "Invalid input. Please try again\n"; 
 
 int load_menu();
 static void draw_menu();
@@ -119,7 +118,7 @@ static int take_menu_input()
         if (inputStr[1] != '\n')
         {
             draw_menu();
-            color_printf(tooLongInput, Red, Black);
+            color_printf(invalidInput, Red, Black);
             continue;
         }
         int input = inputStr[0]-'0';
@@ -184,7 +183,7 @@ int take_height_input()
         if (inputStr[2] != '\n' && inputStr[2] != 0)
         {
             draw_height_selection();
-            color_printf(tooLongInput, Red, Black);
+            color_printf(invalidInput, Red, Black);
             continue;
         }
 
@@ -240,7 +239,7 @@ int take_width_input()
         if (inputStr[2] != '\n' && inputStr[2] != 0)
         {
             draw_width_selection();
-            color_printf(tooLongInput, Red, Black);
+            color_printf(invalidInput, Red, Black);
             continue;
         }
 
@@ -327,7 +326,7 @@ int take_mode_input()
         if (inputStr[1] != '\n')
         {
             draw_mode_selection();
-            color_printf(tooLongInput, Red, Black);
+            color_printf(invalidInput, Red, Black);
             continue;
         }
         int input = inputStr[0]-'0';

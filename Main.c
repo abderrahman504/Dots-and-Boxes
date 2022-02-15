@@ -5,7 +5,8 @@
 
 
 
-int message = MS_MENU;
+int message = MS_NEWGAME;
+int diffi[2] = {5, 5};
 
 
 
@@ -20,7 +21,7 @@ int main()
         switch (message)
         {
             case MS_NEWGAME:
-                message = load_game(gDifficulty,gMode);
+                message = load_game(diffi,1, 0); //Should be load_game(gdifficulty, gMode, 0)
                 break;
             case MS_MENU:
                 message = load_menu();

@@ -32,16 +32,18 @@ static void update_grid(struct position new_edge);
 static void update_screen(char afterStatsMessage[]);
 static char* take_game_input();
 static char check_points_legality(struct position p1, struct position p2);
-static void set_new_edge(struct position p1, struct position p2);
+static int set_new_edge(struct position p1, struct position p2); //Sets the newEdge variable. returns 0 if the edge is already drawn and 1 otherwise.
 static void free_memory();
 
-static const char EmptyMS[] = "\n";
-static const char SaveMS[] = "Your game was saved to \"save file %d.save\".\n";
-static const char UndoMS[] = "You performed an undo.\n";
-static const char RedoMS[] = "You performed a redo.\n";
-static const char InvalidInputMS[] = "Your input is invalid. Try again.\n";
-static const char WrongPointsMS[] = "The points you wrote cannot be connected. Try again.\n";
-static const char ExitSignal = '0';
+static int afterMSColor;
+static char EmptyMS[] = "\n";
+static char SaveMS[] = "Your game was saved to \"save file %d.save\".\n";
+static char UndoMS[] = "You performed an undo.\n";
+static char RedoMS[] = "You performed a redo.\n";
+static char InvalidInputMS[] = "Your input is invalid. Try again.\n";
+static char WrongPointsMS[] = "The points you typed cannot be connected. Try again.\n";
+static char EdgeDrawnMS[] = "This line is already drawn.\n";
+static char ExitSignal = '0';
 
 //game stats
 static struct player player1; //Structure that contains player 1's stats.
@@ -442,7 +444,7 @@ static void update_screen(char afterStatsMessage[])
     set_color(Yellow, Black);
     printf("turn.\n");
 
-    set_color(Red, Black);
+    set_color(afterMSColor, Black);
     printf(afterStatsMessage);
     set_color(Yellow, Black);
     printf("Enter two points: ");
@@ -455,10 +457,19 @@ static char* take_game_input()
     char input[12] = {};
     fgets(input, 12, stdin);
     fflush(stdin);
-    if (input[11] != '\n' && input[11] != 0) return InvalidInputMS; // Case of too long input.
-    if (input[0] == '\n') return InvalidInputMS; // Case of empty input.
+    if (input[11] != '\n' && input[11] != 0) // Case of too long input.
+    {
+        afterMSColor = Red;
+        return InvalidInputMS; 
+    }
+    if (input[0] == '\n') // Case of empty input.
+    {
+        afterMSColor = Red;
+        return InvalidInputMS;
+    }
     if(strcmp(input, "exit\n") == 0)// Case of exit input.
     {
+        afterMSColor = Yellow;
         return "0"; //The exit signal.
     }
     //Check for save input.
@@ -480,10 +491,12 @@ static char* take_game_input()
         if (input[i] == '\n') 
         {
             if (r1*r2*c1*c2) goto coordinateCheckLoopEnd;
+            afterMSColor = Red;
             return InvalidInputMS;
         }
         if (input[i] > '9' || input[i] < '0') 
         {
+            afterMSColor = Red;
             return InvalidInputMS;
         }
         //At this point in the code, input[i] is supposed to be a digit.
@@ -513,6 +526,7 @@ static char* take_game_input()
             default:
             if (!(r1*c1*r2*c2)) // Not all coordinates were provided.
             {
+                afterMSColor = Red;
                 return InvalidInputMS;
             }
             goto coordinateCheckLoopEnd;
@@ -527,22 +541,28 @@ static char* take_game_input()
     char legalPoints = check_points_legality(p1, p2);
     if (legalPoints)
     {
-        set_new_edge(p1, p2);
-        edgeDrawn = 1;
-        return EmptyMS;
+        edgeDrawn = set_new_edge(p1, p2);
+        if (edgeDrawn)
+        {
+            afterMSColor = Yellow;
+            return EmptyMS;
+        }
+        afterMSColor = Red;
+        return EdgeDrawnMS;
     }
     edgeDrawn = 0;
+    afterMSColor = Red;
     return WrongPointsMS;
 }
 
-char check_points_legality(struct position p1, struct position p2)
-{
-    if (p1.row < 1 || p1.row > gridHeight+1 || p2.row < 1 || p2.row > gridHeight+1, p1.col < 1 || p1.col > gridWidth+1 || p2.col < 1 || p2.col > gridWidth+1) return WrongPointsMS;
+static char check_points_legality(struct position p1, struct position p2)
+{   
+    if (p1.row < 0 || p1.row > gridHeight || p2.row < 0 || p2.row > gridHeight || p1.col < 0 || p1.col > gridWidth || p2.col < 0 || p2.col > gridWidth) return 0;
     if ((p1.row == p2.row && abs(p1.col - p2.col) == 1) || (p1.col == p2.col && abs(p1.row - p2.row) == 1)) return 1;
     else return 0;
 }
 
-void set_new_edge(struct position p1, struct position p2)
+static int set_new_edge(struct position p1, struct position p2)
 {
     //There are two cases; we're connecting a horizontal edge or a vertical one.
     //In case of a horizontal one, the edge's row is the row of the points times 2, and the column is the smaller point's column. 
@@ -557,6 +577,8 @@ void set_new_edge(struct position p1, struct position p2)
         newEdge.row = 2*(p1.row<p2.row ? p1.row : p2.row) + 1;
         newEdge.col = p1.col;
     }
+    if (edges[newEdge.row][newEdge.col] == 0) return 1;
+    else return 0;
 }
 
 
