@@ -9,8 +9,8 @@
 struct player
 {
     char id;
-    int score;
     char name[MAX_NAME];
+    int score;
     int edgesDrawn;
 };
 
@@ -30,6 +30,7 @@ static void update_stats(char edge_drawn, struct position new_edge);
 static char handle_new_boxes(struct position new_edge);
 static void update_grid(struct position new_edge);
 static void update_screen(char afterStatsMessage[]);
+static void declare_winner();
 static char* take_game_input();
 static char check_points_legality(struct position p1, struct position p2);
 static int set_new_edge(struct position p1, struct position p2); //Sets the newEdge variable. returns 0 if the edge is already drawn and 1 otherwise.
@@ -49,12 +50,11 @@ static char ExitSignal = '0';
 static struct player player1; //Structure that contains player 1's stats.
 static struct player player2; //Structure that contains player 2's stats.
 static struct player playingPlayer;
-//char** gameGrid; //String that shows the grid of the game.
 static char gameMode;
 static int gridWidth;
 static int gridHeight;
 static int turn;
-static int EdgesRemaining;
+static int edgesRemaining;
 static clock_t gameStart;
 static double gameTime; 
 static char** edges; //This is a 2d array that stores the state of all edges in the game.
@@ -82,17 +82,25 @@ int load_game(int grid_size[2], char game_mode, char save_file[])
     set_mode(game_mode);
     reset_stats();
     playingPlayer = player1;
+    edgeDrawn = 0;
     char* afterStatsMessage = EmptyMS; //Message will be printed after the stats.
     while (1)
     {
         update_stats(edgeDrawn, newEdge);
         update_screen(afterStatsMessage);
+        
+        if (edgesRemaining == 0)
+        {
+            declare_winner();
+            break;
+        }
         afterStatsMessage = take_game_input();
         if (afterStatsMessage[0] == ExitSignal) break;
     }
-    printf("About to end execution of load_game().");
+    color_printf("About to end execution of load_game().", White, Black);
     free_memory();
     getchar();
+    fflush(stdin);
     return MS_MENU;
 }
 
@@ -108,12 +116,6 @@ static int set_grid()
         printf("Could not allocate memory for boxes.\n");
         return -1;
     }
-    /*gameGrid = (char**) malloc((2*gridHeight+1)*sizeof(char*));
-    if (gameGrid == NULL)
-    {
-        printf("Could not allocate memory for gamegrid.\n");
-        return -1;
-    }*/
     edges = (char**) malloc((2*gridHeight+1)*sizeof(char*));
     if (edges == NULL)
     {
@@ -122,25 +124,10 @@ static int set_grid()
     }
     for (int i=0; i<2*gridHeight+1; i++)
     {
-        //char* row = (char*) malloc((3+gridWidth*(HLineWidth+1))*sizeof(char));
-        /*if (row == NULL)
-        {
-            printf("Could not allocate memory for a row in gameGrid.\n");
-            return -1;
-        }*/
-
         char* edgeRow;
         switch (i%2)
         {
             case 0: // The rows with the horizontal edges.
-            //Setting a row in gameGrid.
-
-            /*for (int j=0; j<gridWidth; j++)
-            {
-                row[(HLineWidth+1)*j] = SmallBox;
-                for (int k=1; k<=HLineWidth; k++) row[(HLineWidth+1)*j+k] = ' ';
-            }
-            row[gridWidth*(HLineWidth+1)] = SmallBox;*/
 
             //Setting a row in edges.
             edgeRow = (char*) malloc(gridWidth*sizeof(char));
@@ -156,17 +143,11 @@ static int set_grid()
             }
             boxes[i/2] = boxRow;
 
-            //Setting a row in gameGrid.
-            //for (int j=0; j<gridWidth*(HLineWidth+1)+1; j++) row[j] = ' ';
-
             //Setting a row in edges.
             edgeRow = (char*) malloc((gridWidth+1)*sizeof(char));
             for (int j=0; j<gridWidth+1; j++) edgeRow[j] = 0;
             break;
         }
-        /*row[gridWidth*(HLineWidth+1)+1] = '\n';
-        row[gridWidth*(HLineWidth+1)+2] = '\0';
-        gameGrid[i] = row;*/
 
         edges[i] = edgeRow;
     }
@@ -200,7 +181,7 @@ static void reset_stats()
     reset_player(player2);
     turn = 1;
     gameStart = clock();
-    EdgesRemaining = gridWidth*(gridHeight+1) + gridHeight*(gridWidth+1); 
+    edgesRemaining = gridWidth*(gridHeight+1) + gridHeight*(gridWidth+1); 
 
 }
 
@@ -219,7 +200,7 @@ static void update_stats(char edge_drawn, struct position new_edge)
     if (edge_drawn)
     {
         turn++;
-        EdgesRemaining--;
+        edgesRemaining--;
         playingPlayer.edgesDrawn++;
         edges[new_edge.row][new_edge.col] = playingPlayer.id;
         char boxDrawn = handle_new_boxes(new_edge);
@@ -231,48 +212,6 @@ static void update_stats(char edge_drawn, struct position new_edge)
         {
             playingPlayer = (playingPlayer.id == player1.id) ? player2 : player1;
         }
-        /*This chunk of code updates the gameGrid string, but I don't use it so I don't need this code.
-        //Updating the gameGrid array.
-        for (int row=0; row<2*gridHeight+1; row++)
-        {
-            switch (row%2)
-            {
-                case 0:
-                for (int col=0; col<gridWidth; col++)
-                {
-                    if (edges[row][col])
-                    {
-                        for (int j=0; j<HLineWidth; j++)
-                        {
-                            gameGrid[row][(HLineWidth+1)*col+1+j] = HLine;
-                        }
-                    }
-                }
-                break;
-    //----------------------------------------------------
-                case 1:
-                for (int col=0; col<(HLineWidth+1)*gridWidth+1; col++)
-                {
-                    switch (col%5)
-                    {
-                        case 0: //A vertical line character.
-                        if (edges[row][col/5])
-                        {
-                            gameGrid[row][col] == VLine;
-                        }
-                        break;
-                        
-                        default: //A box character.
-                        if (boxes[(row+1)/2][col/5])
-                        {
-                            gameGrid[row][col] == BigBox;
-                        }
-                    }
-                }
-                break;
-                
-            }
-        }*/
     }
     clock_t timeEnd = clock();
     gameTime = ((double) (timeEnd-gameStart)) / CLOCKS_PER_SEC;
@@ -291,7 +230,7 @@ static char handle_new_boxes(struct position new_edge)
         //Checking the above square.
         if (new_edge.row != 0)
         {
-            if ((edges[new_edge.row-2][new_edge.col] == 0) || (edges[new_edge.row-1][new_edge.col] == 0) || (edges[new_edge.row-1][new_edge.col+1] == 0)) break;
+            if ((edges[new_edge.row-2][new_edge.col] == 0) || (edges[new_edge.row-1][new_edge.col] == 0) || (edges[new_edge.row-1][new_edge.col+1] == 0)) goto BottomSquare;
             newBox.row = new_edge.row / 2 - 1;
             newBox.col = new_edge.col;
             boxes[newBox.row][newBox.col] = playingPlayer.id;
@@ -299,6 +238,7 @@ static char handle_new_boxes(struct position new_edge)
             boxDrawn = 1;
         }
     //Checking the below square.
+        BottomSquare:
         if (new_edge.row != 2*gridHeight)
         {
             if ((edges[new_edge.row+2][new_edge.col] == 0) || (edges[new_edge.row+1][new_edge.col] == 0) || (edges[new_edge.row+1][new_edge.col+1] == 0)) break;
@@ -317,7 +257,7 @@ static char handle_new_boxes(struct position new_edge)
         //Left Square.
         if (new_edge.col != 0)
         {
-            if (edges[new_edge.row][new_edge.col-1] == 0 || edges[new_edge.row-1][new_edge.col-1] == 0 || edges[new_edge.row+1][new_edge.col-1] == 0) break;
+            if (edges[new_edge.row][new_edge.col-1] == 0 || edges[new_edge.row-1][new_edge.col-1] == 0 || edges[new_edge.row+1][new_edge.col-1] == 0) goto RightSquare;
             newBox.row = (new_edge.row-1) / 2;
             newBox.col = new_edge.col-1;
             boxes[newBox.row][newBox.col] = playingPlayer.id;
@@ -325,6 +265,7 @@ static char handle_new_boxes(struct position new_edge)
             boxDrawn = 1;
         }
         //Right Square.
+        RightSquare:
         if (new_edge.col != gridWidth)
         {
             if (edges[new_edge.row][new_edge.col+1] == 0 || edges[new_edge.row-1][new_edge.col] == 0 || edges[new_edge.row+1][new_edge.col] == 0) break;
@@ -437,39 +378,62 @@ static void update_screen(char afterStatsMessage[])
     minutes = (int)(gameTime) / 60;
     printf("Game time: %dm %ds\n", minutes, seconds); // Print game time.
 
-    printf("It's ");
-    int turnColor = playingPlayer.id == player1.id ? Blue : Red;
-    set_color(turnColor, Black);
-    printf("%s's ", playingPlayer.name);
-    set_color(Yellow, Black);
-    printf("turn.\n");
 
     set_color(afterMSColor, Black);
     printf(afterStatsMessage);
-    set_color(Yellow, Black);
-    printf("Enter two points: ");
+
+}
+
+
+
+static void declare_winner()
+{
+    if (player1.score == player2.score)
+    {
+        color_printf("It's a draw!\n", White, Black);
+    }
+    else
+    {
+        struct player winner =  player1.score > player2.score ? player1 : player2; 
+        int winnerColor = winner.id == 1 ? Blue : Red;
+        color_printf(winner.name, winnerColor, Black);
+        color_printf(" is the winner!\n", White, Black);
+    }
 }
 
 
 
 static char* take_game_input()
 {
+    color_printf("It's ", Yellow, Black); // Printing which player's turn it is.
+    int turnColor = playingPlayer.id == player1.id ? Blue : Red;
+    set_color(turnColor, Black);
+    printf("%s's ", playingPlayer.name);
+    set_color(Yellow, Black);
+    printf("turn.\n");
+
+    set_color(Yellow, Black);
+    printf("Enter two points: ");
+
     char input[12] = {};
     fgets(input, 12, stdin);
     fflush(stdin);
     if (input[11] != '\n' && input[11] != 0) // Case of too long input.
     {
         afterMSColor = Red;
+        edgeDrawn = 0;
         return InvalidInputMS; 
     }
     if (input[0] == '\n') // Case of empty input.
     {
         afterMSColor = Red;
+        edgeDrawn = 0;
         return InvalidInputMS;
     }
     if(strcmp(input, "exit\n") == 0)// Case of exit input.
     {
         afterMSColor = Yellow;
+        edgeDrawn = 0;
         return "0"; //The exit signal.
     }
     //Check for save input.
@@ -492,11 +456,13 @@ static char* take_game_input()
         {
             if (r1*r2*c1*c2) goto coordinateCheckLoopEnd;
             afterMSColor = Red;
+            edgeDrawn = 0;
             return InvalidInputMS;
         }
         if (input[i] > '9' || input[i] < '0') 
         {
             afterMSColor = Red;
+            edgeDrawn = 0;
             return InvalidInputMS;
         }
         //At this point in the code, input[i] is supposed to be a digit.
@@ -527,6 +493,7 @@ static char* take_game_input()
             if (!(r1*c1*r2*c2)) // Not all coordinates were provided.
             {
                 afterMSColor = Red;
+                edgeDrawn = 0;
                 return InvalidInputMS;
             }
             goto coordinateCheckLoopEnd;
